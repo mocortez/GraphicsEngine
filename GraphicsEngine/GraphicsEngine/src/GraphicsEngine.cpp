@@ -2,7 +2,7 @@
 #include <d3d11.h>
 #include <iostream>
 
-// Librería necesaria para vincular las funciones de DirectX
+// Librerías necesarias para vincular las funciones de DirectX
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "d3dcompiler.lib")
 
@@ -12,27 +12,32 @@ GraphicsEngine::GraphicsEngine() :
     m_vs(nullptr), m_ps(nullptr), m_layout(nullptr) {
 }
 
-GraphicsEngine::~GraphicsEngine() {}
+GraphicsEngine::~GraphicsEngine() {
+    this->release();
+}
 
 bool GraphicsEngine::init() {
+    // Definimos los tipos de driver y niveles de característica (DirectX 11.0 mínimo)
     D3D_DRIVER_TYPE driver_types[] = { D3D_DRIVER_TYPE_HARDWARE, D3D_DRIVER_TYPE_WARP };
     D3D_FEATURE_LEVEL feature_levels[] = { D3D_FEATURE_LEVEL_11_0 };
 
     HRESULT hr;
     for (UINT i = 0; i < ARRAYSIZE(driver_types); i++) {
-        hr = D3D11CreateDevice(NULL, driver_types[i], NULL, NULL, feature_levels,
+        hr = D3D11CreateDevice(NULL, driver_types[i], NULL, 0, feature_levels,
             ARRAYSIZE(feature_levels), D3D11_SDK_VERSION,
             &m_d3d_device, NULL, &m_imm_context);
         if (SUCCEEDED(hr)) break;
     }
+
     if (FAILED(hr)) return false;
 
-    // Acceso a la infraestructura DXGI (necesario para el SwapChain)
+    // --- ACCESO A LA INFRAESTRUCTURA DXGI ---
+    // Necesario para que el SwapChain pueda comunicarse con el dispositivo
     m_d3d_device->QueryInterface(__uuidof(IDXGIDevice), (void**)&m_dxgi_device);
     m_dxgi_device->GetParent(__uuidof(IDXGIAdapter), (void**)&m_dxgi_adapter);
     m_dxgi_adapter->GetParent(__uuidof(IDXGIFactory), (void**)&m_dxgi_factory);
 
-    // Creamos los shaders inmediatamente después de iniciar el dispositivo
+    // Creamos los shaders inmediatamente
     return createShaders();
 }
 
@@ -44,22 +49,36 @@ bool GraphicsEngine::createShaders() {
     // 1. Compilar Vertex Shader
     HRESULT hr = D3DCompileFromFile(L"Shaders/Shaders.hlsl", nullptr, nullptr, "vs_main", "vs_5_0", 0, 0, &vs_blob, &error_blob);
     if (FAILED(hr)) {
-        if (error_blob) std::cout << (char*)error_blob->GetBufferPointer() << "\n";
+        if (error_blob) {
+            std::cout << "VS Error: " << (char*)error_blob->GetBufferPointer() << "\n";
+            error_blob->Release();
+        }
         return false;
     }
     m_d3d_device->CreateVertexShader(vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), nullptr, &m_vs);
 
-    // 2. Crear el Input Layout (El mapa de tus Point3D)
+    // 2. Crear el Input Layout (MAPA DE MEMORIA PARA POINT3D)
+    // El offset de COLOR es 16 porque: Vector3D(12) + Padding(4) = 16 bytes.
     D3D11_INPUT_ELEMENT_DESC layout_desc[] = {
         {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"COLOR",    0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0}
+        {"COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0}
     };
-    m_d3d_device->CreateInputLayout(layout_desc, ARRAYSIZE(layout_desc), vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), &m_layout);
-    vs_blob->Release();
+
+    hr = m_d3d_device->CreateInputLayout(layout_desc, ARRAYSIZE(layout_desc),
+        vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), &m_layout);
+    vs_blob->Release(); // Ya no necesitamos el código fuente compilado en RAM tras crear el layout
+
+    if (FAILED(hr)) return false;
 
     // 3. Compilar Pixel Shader
     hr = D3DCompileFromFile(L"Shaders/Shaders.hlsl", nullptr, nullptr, "ps_main", "ps_5_0", 0, 0, &ps_blob, &error_blob);
-    if (FAILED(hr)) return false;
+    if (FAILED(hr)) {
+        if (error_blob) {
+            std::cout << "PS Error: " << (char*)error_blob->GetBufferPointer() << "\n";
+            error_blob->Release();
+        }
+        return false;
+    }
     m_d3d_device->CreatePixelShader(ps_blob->GetBufferPointer(), ps_blob->GetBufferSize(), nullptr, &m_ps);
     ps_blob->Release();
 
@@ -67,14 +86,24 @@ bool GraphicsEngine::createShaders() {
 }
 
 bool GraphicsEngine::release() {
+    // IMPORTANTE: Liberar en orden inverso a la creación para evitar punteros huérfanos
     if (m_layout) m_layout->Release();
     if (m_vs) m_vs->Release();
     if (m_ps) m_ps->Release();
+
     if (m_dxgi_factory) m_dxgi_factory->Release();
     if (m_dxgi_adapter) m_dxgi_adapter->Release();
     if (m_dxgi_device) m_dxgi_device->Release();
+
     if (m_imm_context) m_imm_context->Release();
     if (m_d3d_device) m_d3d_device->Release();
+
+    // Reset de punteros para seguridad
+    m_layout = nullptr;
+    m_vs = nullptr;
+    m_ps = nullptr;
+    m_d3d_device = nullptr;
+
     return true;
 }
 

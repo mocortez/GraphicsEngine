@@ -2,11 +2,12 @@
 #include <iostream>
 #include "GraphicsEngine.h"
 #include "SwapChain.h"
-#include "MeshLoader.h"
 
+// Callback de la ventana (Win32)
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch (uMsg) {
     case WM_CREATE: {
+        // Guardamos la referencia de nuestra clase AppWindow en la ventana de Windows
         AppWindow* window = (AppWindow*)((LPCREATESTRUCT)lParam)->lpCreateParams;
         SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)window);
         break;
@@ -36,7 +37,8 @@ bool AppWindow::init() {
 
     if (!RegisterClassEx(&wc)) return false;
 
-    m_hwnd = CreateWindowEx(WS_EX_OVERLAPPEDWINDOW, L"MyWindowClass", L"Graphics Engine - Fotogrametria DJI",
+    // Creamos la ventana pasando 'this' como último parámetro para el WM_CREATE
+    m_hwnd = CreateWindowEx(WS_EX_OVERLAPPEDWINDOW, L"MyWindowClass", L"Graphics Engine - DX11 Technical Art",
         WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 1280, 720, NULL, NULL, NULL, this);
 
     if (!m_hwnd) return false;
@@ -60,17 +62,21 @@ void AppWindow::broadcast() {
 bool AppWindow::isRun() const { return m_is_run; }
 
 void AppWindow::onCreate() {
+    // Inicia el motor de gráficos
     GraphicsEngine::get()->init();
 
+    // --- DATOS DE VÉRTICES (Puntos con Color) ---
+    // Usamos el nuevo Point3D que tiene padding y Alpha para sumar 32 bytes
     Point3D list[] = {
-        { Vector3D(-0.5f, -0.5f, 0.0f), 1.0f, 0.0f, 0.0f },
-        { Vector3D(0.0f,  0.5f, 0.0f), 0.0f, 1.0f, 0.0f },
-        { Vector3D(0.5f, -0.5f, 0.0f), 0.0f, 0.0f, 1.0f }
+        { Vector3D(-0.5f, -0.5f, 0.0f), 1.0f, 0.0f, 0.0f }, // Rojo
+        { Vector3D(0.0f,  0.5f, 0.0f), 0.0f, 1.0f, 0.0f }, // Verde
+        { Vector3D(0.5f, -0.5f, 0.0f), 0.0f, 0.0f, 1.0f }  // Azul
     };
 
     m_vb = new VertexBuffer();
     m_vb->load(list, sizeof(Point3D), ARRAYSIZE(list));
 
+    // Inicializamos el SwapChain basado en el tamaño actual de la ventana
     RECT rc;
     GetClientRect(m_hwnd, &rc);
     m_swap_chain = new SwapChain();
@@ -80,32 +86,52 @@ void AppWindow::onCreate() {
 void AppWindow::onUpdate() {
     if (!m_is_run || !m_swap_chain) return;
 
+    // 1. LIMPIEZA DE PANTALLA
     auto ctx = GraphicsEngine::get()->getImmediateContext();
-    float clear_color[] = { 0.0f, 0.3f, 0.4f, 1.0f };
+    float clear_color[] = { 0.1f, 0.1f, 0.15f, 1.0f }; // Azul oscuro profundo
     ctx->ClearRenderTargetView(m_swap_chain->getRenderTargetView(), clear_color);
 
-    // Optimizamos: Usamos un tamaño fijo o guardado en lugar de llamar a GetClientRect cada frame
-    D3D11_VIEWPORT vp = { 0, 0, 1280.0f, 720.0f, 0.0f, 1.0f };
+    // 2. CONFIGURACIÓN DEL VIEWPORT (Dinámico)
+    RECT rc;
+    GetClientRect(m_hwnd, &rc);
+    D3D11_VIEWPORT vp = { 0, 0, (float)(rc.right - rc.left), (float)(rc.bottom - rc.top), 0.0f, 1.0f };
     ctx->RSSetViewports(1, &vp);
 
+    // 3. ENLAZAR PIPELINE (Shaders y Layout)
     ctx->IASetInputLayout(GraphicsEngine::get()->getInputLayout());
+    ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
     ctx->VSSetShader(GraphicsEngine::get()->getVertexShader(), nullptr, 0);
     ctx->PSSetShader(GraphicsEngine::get()->getPixelShader(), nullptr, 0);
 
-    UINT stride = sizeof(Point3D);
+    // 4. ENLAZAR DATOS (VertexBuffer)
+    UINT stride = sizeof(Point3D); // Debe ser 32 bytes
     UINT offset = 0;
     ID3D11Buffer* vb_raw = m_vb->getBuffer();
     ctx->IASetVertexBuffers(0, 1, &vb_raw, &stride, &offset);
 
-    ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    // 5. DIBUJAR
     ctx->Draw(m_vb->getSizeVertexList(), 0);
 
+    // 6. PRESENTAR (Con V-Sync activo dentro de SwapChain)
     m_swap_chain->present();
 }
 
 void AppWindow::onDestroy() {
-    m_is_run = false; // Detiene el bucle en main.cpp
-    if (m_vb) { m_vb->release(); delete m_vb; m_vb = nullptr; }
-    if (m_swap_chain) { m_swap_chain->release(); delete m_swap_chain; m_swap_chain = nullptr; }
+    m_is_run = false;
+
+    // Limpieza en orden inverso
+    if (m_vb) {
+        m_vb->release();
+        delete m_vb;
+        m_vb = nullptr;
+    }
+
+    if (m_swap_chain) {
+        m_swap_chain->release();
+        delete m_swap_chain;
+        m_swap_chain = nullptr;
+    }
+
     GraphicsEngine::get()->release();
 }
