@@ -1,18 +1,18 @@
 #include <windows.h>
 #include "AppWindow.h"
+#include <iostream>
 
-int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nCmdShow) {
-
+int main() {
     AppWindow app;
-
-    if (app.init()) {
+    if (app.init()) { // SOLO si inicia bien entramos al bucle
         while (app.isRun()) {
             app.broadcast();
-            // Sleep(0) permite que Windows procese otros hilos. 
-            // Es una red de seguridad mientras desarrollamos.
-            Sleep(0);
         }
     }
-
+    else {
+        // Si falla, imprimimos y salimos de inmediato
+        std::cout << "Error: No se pudo inicializar la AppWindow. Revisa los logs de los Shaders.\n";
+        system("pause"); // Esto te deja ver el error antes de que se cierre
+    }
     return 0;
 }
