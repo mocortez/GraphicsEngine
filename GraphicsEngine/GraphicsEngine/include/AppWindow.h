@@ -5,6 +5,7 @@
 #include "VertexBuffer.h"
 #include "Point3D.h"
 #include "Matrix4x4.h"
+#include "ConstantBuffer.h"
 
 // Forward declarations
 class SwapChain;
@@ -33,6 +34,7 @@ protected:
 private:
 	// --- Datos y Buffer ---
 	VertexBuffer* m_vb;
+	ConstantBuffer* m_cb;
 
 	// --- Componentes de DirectX 11 ---
 	SwapChain* m_swap_chain;
