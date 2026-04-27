@@ -86,23 +86,17 @@ bool GraphicsEngine::createShaders() {
 }
 
 bool GraphicsEngine::release() {
-    // IMPORTANTE: Liberar en orden inverso a la creación para evitar punteros huérfanos
-    if (m_layout) m_layout->Release();
-    if (m_vs) m_vs->Release();
-    if (m_ps) m_ps->Release();
+    // Liberamos solo si el puntero no es nulo
+    if (m_layout) { m_layout->Release(); m_layout = nullptr; }
+    if (m_vs) { m_vs->Release(); m_vs = nullptr; }
+    if (m_ps) { m_ps->Release(); m_ps = nullptr; }
 
-    if (m_dxgi_factory) m_dxgi_factory->Release();
-    if (m_dxgi_adapter) m_dxgi_adapter->Release();
-    if (m_dxgi_device) m_dxgi_device->Release();
+    if (m_dxgi_factory) { m_dxgi_factory->Release(); m_dxgi_factory = nullptr; }
+    if (m_dxgi_adapter) { m_dxgi_adapter->Release(); m_dxgi_adapter = nullptr; }
+    if (m_dxgi_device) { m_dxgi_device->Release(); m_dxgi_device = nullptr; }
 
-    if (m_imm_context) m_imm_context->Release();
-    if (m_d3d_device) m_d3d_device->Release();
-
-    // Reset de punteros para seguridad
-    m_layout = nullptr;
-    m_vs = nullptr;
-    m_ps = nullptr;
-    m_d3d_device = nullptr;
+    if (m_imm_context) { m_imm_context->Release(); m_imm_context = nullptr; }
+    if (m_d3d_device) { m_d3d_device->Release(); m_d3d_device = nullptr; }
 
     return true;
 }

@@ -136,6 +136,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\AppWindow.cpp" />
+    <ClCompile Include="src\ConstantBuffer.cpp" />
     <ClCompile Include="src\GraphicsEngine.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\MeshLoader.cpp" />
@@ -144,6 +145,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\AppWindow.h" />
+    <ClInclude Include="include\ConstantBuffer.h" />
     <ClInclude Include="include\GraphicsEngine.h" />
     <ClInclude Include="include\MathUtils.h" />
     <ClInclude Include="include\Matrix2x2.h" />

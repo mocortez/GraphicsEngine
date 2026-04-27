@@ -4,15 +4,21 @@
 
 int main() {
     AppWindow app;
-    if (app.init()) { // SOLO si inicia bien entramos al bucle
+
+    std::cout << "Iniciando Engine..." << std::endl;
+
+    if (app.init()) {
+        std::cout << "DirectX 11 Inicializado correctamente en NVIDIA RTX 3060" << std::endl;
         while (app.isRun()) {
             app.broadcast();
         }
     }
     else {
-        // Si falla, imprimimos y salimos de inmediato
-        std::cout << "Error: No se pudo inicializar la AppWindow. Revisa los logs de los Shaders.\n";
-        system("pause"); // Esto te deja ver el error antes de que se cierre
+        std::cerr << "FALLO CRITICO: Revisa los errores del Shader arriba." << std::endl;
+        // El system("pause") es vital para que la consola no se cierre 
+        // antes de que puedas leer el error.
+        system("pause");
     }
+
     return 0;
 }
