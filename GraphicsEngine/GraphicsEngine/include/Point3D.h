@@ -1,17 +1,22 @@
 #pragma once
 #include "Vector3D.h"
 
-// Alineamos a 16 bytes para que la GPU procese cada punto de forma óptima
+struct MeshUV {
+    float u, v;
+    MeshUV() : u(0.0f), v(0.0f) {}
+    MeshUV(float _u, float _v) : u(_u), v(_v) {}
+};
+
+// Alineación estricta de 32 bytes exactos (12 + 12 + 8) sin paddings ocultos
 struct alignas(16) Point3D
 {
-    Vector3D position; // 1
-    float padding;     // 2
-    float r, g, b, a;  // 3, 4, 5, 6
+    Vector3D position; // 12 bytes (offset: 0)
+    Vector3D normal;   // 12 bytes (offset: 12)
+    MeshUV texcoord;   // 8 bytes  (offset: 24)
 
-    // El orden debe ser: position -> padding -> r -> g -> b -> a
-    Point3D() : position(0, 0, 0), padding(0.0f), r(1.0f), g(1.0f), b(1.0f), a(1.0f) {}
+    Point3D() : position(0, 0, 0), normal(0, 1, 0), texcoord(0, 0) {}
 
-    Point3D(Vector3D pos, float red, float green, float blue)
-        : position(pos), padding(0.0f), r(red), g(green), b(blue), a(1.0f) {
+    Point3D(Vector3D pos, Vector3D norm, MeshUV uv)
+        : position(pos), normal(norm), texcoord(uv) {
     }
 };

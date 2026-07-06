@@ -1,8 +1,17 @@
 #include <windows.h>
 #include "AppWindow.h"
 #include <iostream>
+#include <objbase.h> // Necesario para CoInitializeEx y CoUninitialize
 
 int main() {
+    // 1. INICIALIZAR SUBSISTEMA COM PARA WIC (Multithreaded o SingleThreaded)
+    HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+    if (FAILED(hr)) {
+        std::cerr << "FALLO CRITICO: No se pudo inicializar el subsistema COM de Windows." << std::endl;
+        system("pause");
+        return -1;
+    }
+
     AppWindow app;
 
     std::cout << "Iniciando Engine..." << std::endl;
@@ -15,10 +24,11 @@ int main() {
     }
     else {
         std::cerr << "FALLO CRITICO: Revisa los errores del Shader arriba." << std::endl;
-        // El system("pause") es vital para que la consola no se cierre 
-        // antes de que puedas leer el error.
         system("pause");
     }
+
+    // 2. LIBERAR SUBSISTEMA COM AL CERRAR EL MOTOR
+    CoUninitialize();
 
     return 0;
 }

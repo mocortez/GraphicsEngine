@@ -1,46 +1,40 @@
-#pragma once
-#define WIN32_LEAN_AND_MEAN
+#ifndef APPWINDOW_H
+#define APPWINDOW_H
+
 #include <windows.h>
-#include <vector>
+#include <d3d11.h> // CORRECCIÓN: Evita el error "missing ';' before '*'" en el tipo de interfaz de DirectX
+
+// Incluimos las definiciones directas para evitar "use of undefined type"
+#include "SwapChain.h"
 #include "VertexBuffer.h"
-#include "Point3D.h"
-#include "Matrix4x4.h"
 #include "ConstantBuffer.h"
+#include "Texture.h"
+#include "Matrix4x4.h"
 
-// Forward declarations
-class SwapChain;
-
-class AppWindow
-{
+class AppWindow {
 public:
-	AppWindow();
-	~AppWindow();
+    AppWindow();
+    ~AppWindow();
 
-	// Ciclo de vida de la aplicación
-	bool init();
-	bool release();
-	bool isRun() const; // Marcado como const para evitar advertencias
-	void broadcast();   // Sincronizado con main.cpp
+    bool init();
+    bool isRun() const;
+    void broadcast();
 
-	// Eventos de Renderizado
-	virtual void onCreate();
-	virtual void onUpdate();
-	virtual void onDestroy();
-
-protected:
-	HWND m_hwnd;
-	bool m_is_run;
+    void onCreate();
+    void onUpdate();
+    void onDestroy();
 
 private:
-	// --- Datos y Buffer ---
-	VertexBuffer* m_vb;
-	ConstantBuffer* m_cb;
+    HWND m_hwnd;
+    bool m_is_run;
 
-	// --- Componentes de DirectX 11 ---
-	SwapChain* m_swap_chain;
+    SwapChain* m_swap_chain;
+    VertexBuffer* m_vb;
+    ConstantBuffer* m_cb;
+    Texture* m_mesh_texture;
 
-	// --- Pipeline Matemático (MVP) ---
-	Matrix4x4 m_world_matrix;
-	Matrix4x4 m_view_matrix;
-	Matrix4x4 m_proj_matrix;
+    // CORRECCIÓN: El estado ahora sí es reconocido de forma nativa por la cabecera
+    ID3D11RasterizerState* m_raster_state = nullptr;
 };
+
+#endif // APPWINDOW_H

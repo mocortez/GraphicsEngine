@@ -146,6 +146,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\MeshLoader.cpp" />
     <ClCompile Include="src\SwapChain.cpp" />
+    <ClCompile Include="src\Texture.cpp" />
     <ClCompile Include="src\VertexBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -160,6 +161,7 @@
     <ClInclude Include="include\Point3D.h" />
     <ClInclude Include="include\Prerequisites.h" />
     <ClInclude Include="include\SwapChain.h" />
+    <ClInclude Include="include\Texture.h" />
     <ClInclude Include="include\Vector2D.h" />
     <ClInclude Include="include\Vector3D.h" />
     <ClInclude Include="include\Vector4D.h" />

@@ -13,6 +13,7 @@ public:
 
 	// --- GETTERS PÚBLICOS ---
 	UINT getSizeVertexList() const { return m_size_list; }
+	UINT getVertexCount() const { return m_size_list; } // Add this public method to VertexBuffer to provide the vertex count
 	ID3D11Buffer* getBuffer() { return m_buffer; } // <--- Movido aquí para que AppWindow lo vea
 
 private:

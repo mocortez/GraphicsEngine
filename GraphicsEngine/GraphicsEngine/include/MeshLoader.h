@@ -4,8 +4,7 @@
 #include <string>
 #include "Point3D.h"
 
-class MeshLoader
-{
+class MeshLoader {
 public:
-	static std::vector<Point3D> loadOBJ(const std::string& path);
+    static bool LoadOBJ(const std::string& filepath, std::vector<Point3D>& out_vertices);
 };
